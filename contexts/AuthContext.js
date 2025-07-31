@@ -18,23 +18,34 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log("AuthContext: useEffect triggered")
     const token = localStorage.getItem("token")
+    console.log("AuthContext: Token from localStorage:", token ? "Found" : "Not found")
+    
     if (token) {
+      console.log("AuthContext: Setting axios default header")
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
       fetchUser()
     } else {
+      console.log("AuthContext: No token found, setting loading to false")
       setLoading(false)
     }
   }, [])
 
   const fetchUser = async () => {
+    console.log("AuthContext: fetchUser called")
     try {
+      console.log("AuthContext: Making request to /api/auth/me")
       const response = await axios.get("/api/auth/me")
+      console.log("AuthContext: User fetched successfully:", response.data.user)
       setUser(response.data.user)
     } catch (error) {
+      console.error("AuthContext: fetchUser error:", error.response?.data)
+      console.error("AuthContext: Removing token due to error")
       localStorage.removeItem("token")
       delete axios.defaults.headers.common["Authorization"]
     } finally {
+      console.log("AuthContext: Setting loading to false")
       setLoading(false)
     }
   }

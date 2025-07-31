@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import axios from "axios"
@@ -12,10 +12,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, MapPin, Star, Filter, Zap, Wrench, Car, Hammer, Users, Sparkles, Leaf, Paintbrush } from "lucide-react"
+import { Search, MapPin, Star, Filter, Zap, Wrench, Car, Hammer, Users, Sparkles, Leaf, Paintbrush, SprayCan, Brush } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { useToast } from "@/hooks/use-toast"
 
 const categories = [
-  { name: "all", label: "All Categories", icon: null },
   { name: "Electrician", label: "Electrician", icon: Zap },
   { name: "Plumber", label: "Plumber", icon: Wrench },
   { name: "Mechanic", label: "Mechanic", icon: Car },
@@ -24,16 +25,21 @@ const categories = [
   { name: "Cleaning", label: "Cleaning", icon: Sparkles },
   { name: "Gardening", label: "Gardening", icon: Leaf },
   { name: "Painting", label: "Painting", icon: Paintbrush },
+  { name: "Fumigation", label: "Fumigation", icon: SprayCan },
+  { name: "Janitorial Services", label: "Janitorial Services", icon: Brush },
 ]
 
 export default function ServicesPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
-    search: searchParams.get("search") || "",
-    category: searchParams.get("category") || "all",
-    location: searchParams.get("location") || "",
+    search: "",
+    category: "",
+    location: "",
     sortBy: "newest",
   })
   const [pagination, setPagination] = useState({
@@ -43,8 +49,23 @@ export default function ServicesPage() {
     pages: 0,
   })
 
+  // Sync filters with searchParams whenever the URL changes
   useEffect(() => {
-    fetchServices()
+    setFilters((prev) => ({
+      ...prev,
+      search: searchParams.get("search") || "",
+      category: searchParams.get("category") || "",
+      location: searchParams.get("location") || "",
+    }))
+    setPagination((prev) => ({ ...prev, page: 1 }))
+    // eslint-disable-next-line
+  }, [searchParams])
+
+  useEffect(() => {
+    if (filters.category) {
+      fetchServices()
+    }
+    // eslint-disable-next-line
   }, [filters, pagination.page])
 
   const fetchServices = async () => {
@@ -52,7 +73,7 @@ export default function ServicesPage() {
     try {
       const params = new URLSearchParams()
       if (filters.search) params.set("search", filters.search)
-      if (filters.category !== "all") params.set("category", filters.category)
+      if (filters.category) params.set("category", filters.category)
       if (filters.location) params.set("location", filters.location)
       params.set("page", pagination.page.toString())
       params.set("limit", pagination.limit.toString())
@@ -65,7 +86,7 @@ export default function ServicesPage() {
         pages: response.data.pagination.pages,
       }))
     } catch (error) {
-      console.error("Error fetching services:", error)
+      setServices([])
     } finally {
       setLoading(false)
     }
@@ -98,18 +119,63 @@ export default function ServicesPage() {
     </Card>
   )
 
+  // Only show categories if no category is selected
+  if (!filters.category) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Find Services</h1>
+            <p className="text-gray-600">Browse categories and request providers as needed</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {categories.map((category) => {
+              const IconComponent = category.icon
+              return (
+                <Card key={category.name} className="overflow-visible">
+                  <CardContent className="p-6 flex flex-col items-center justify-center">
+                    <div className="mb-4 flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2 mx-auto">
+                        {IconComponent && <IconComponent className="w-8 h-8 text-blue-600 mx-auto" />}
+                      </div>
+                      <h2 className="text-xl font-semibold text-gray-900 text-center">{category.label}</h2>
+                    </div>
+                    <Button
+                      className="mb-2 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        if (!user) {
+                          toast({
+                            title: "Login Required",
+                            description: "Please log in to request providers.",
+                            variant: "destructive",
+                          })
+                        } else {
+                          router.push(`/services?category=${category.name}`)
+                        }
+                      }}
+                    >
+                      Request Providers
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // If a category is selected, show the full search/filter/provider grid UI
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Find Services</h1>
-          <p className="text-gray-600">Discover trusted professionals for all your home service needs</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Find {filters.category} Providers</h1>
+          <p className="text-gray-600">Search, filter, and request providers for {filters.category}</p>
         </div>
-
-        {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
           <div className="grid md:grid-cols-4 gap-4 mb-4">
             <div className="relative">
@@ -121,7 +187,6 @@ export default function ServicesPage() {
                 className="pl-10"
               />
             </div>
-
             <Select value={filters.category} onValueChange={(value) => handleFilterChange("category", value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Category" />
@@ -134,7 +199,6 @@ export default function ServicesPage() {
                 ))}
               </SelectContent>
             </Select>
-
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -144,52 +208,15 @@ export default function ServicesPage() {
                 className="pl-10"
               />
             </div>
-
             <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700">
               <Filter className="w-4 h-4 mr-2" />
               Search
             </Button>
           </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap gap-2">
-              {categories.slice(1).map((category) => {
-                const IconComponent = category.icon
-                return (
-                  <Button
-                    key={category.name}
-                    variant={filters.category === category.name ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleFilterChange("category", category.name)}
-                    className="text-xs"
-                  >
-                    {IconComponent && <IconComponent className="w-3 h-3 mr-1" />}
-                    {category.label}
-                  </Button>
-                )
-              })}
-            </div>
-
-            <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange("sortBy", value)}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
-
-        {/* Results */}
         <div className="mb-6">
           <p className="text-gray-600">{loading ? "Loading..." : `${pagination.total} services found`}</p>
         </div>
-
-        {/* Services Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {loading ? (
             Array.from({ length: 8 }).map((_, index) => <ServiceSkeleton key={index} />)
@@ -199,9 +226,7 @@ export default function ServicesPage() {
                 <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1">
                   <div className="relative">
                     <Image
-                      src={
-                        service.images?.[0] || `/placeholder.svg?height=200&width=300&query=${service.category} service`
-                      }
+                      src={service.images?.[0] || `/placeholder.svg?height=200&width=300&query=${service.category} service`}
                       alt={service.title}
                       width={300}
                       height={200}
@@ -218,12 +243,10 @@ export default function ServicesPage() {
                       </div>
                     )}
                   </div>
-
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                       {service.title}
                     </h3>
-
                     <div className="flex items-center space-x-2 mb-3">
                       <Image
                         src={service.provider?.avatar || "/placeholder-user.jpg"}
@@ -234,7 +257,6 @@ export default function ServicesPage() {
                       />
                       <span className="text-sm text-gray-600">{service.provider?.name}</span>
                     </div>
-
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -246,7 +268,6 @@ export default function ServicesPage() {
                         <span className="truncate">{service.location}</span>
                       </div>
                     </div>
-
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-xl font-bold text-blue-600">${service.price}</span>
@@ -273,8 +294,6 @@ export default function ServicesPage() {
             </div>
           )}
         </div>
-
-        {/* Pagination */}
         {pagination.pages > 1 && (
           <div className="flex justify-center space-x-2">
             <Button
@@ -284,7 +303,6 @@ export default function ServicesPage() {
             >
               Previous
             </Button>
-
             {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
               const page = i + 1
               return (
@@ -297,7 +315,6 @@ export default function ServicesPage() {
                 </Button>
               )
             })}
-
             <Button
               variant="outline"
               disabled={pagination.page === pagination.pages}
@@ -311,3 +328,4 @@ export default function ServicesPage() {
     </div>
   )
 }
+

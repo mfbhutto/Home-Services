@@ -23,25 +23,98 @@ import {
   Leaf,
   Paintbrush,
   Home,
+  SprayCan,
+  Brush,
 } from "lucide-react"
 import Lottie from "lottie-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/AuthContext"
 
 const categories = [
   { name: "Electrician", icon: Zap, color: "bg-yellow-100 text-yellow-600", count: "120+ Services" },
   { name: "Plumber", icon: Wrench, color: "bg-blue-100 text-blue-600", count: "95+ Services" },
-  // { name: "Mechanic", icon: Car, color: "bg-red-100 text-red-600", count: "80+ Services" },
-  // { name: "Renovator", icon: Hammer, color: "bg-orange-100 text-orange-600", count: "65+ Services" },
-  // { name: "Labor", icon: Users, color: "bg-purple-100 text-purple-600", count: "150+ Services" },
-  // { name: "Cleaning", icon: Sparkles, color: "bg-green-100 text-green-600", count: "110+ Services" },
-  // { name: "Gardening", icon: Leaf, color: "bg-emerald-100 text-emerald-600", count: "75+ Services" },
-  // { name: "Painting", icon: Paintbrush, color: "bg-pink-100 text-pink-600", count: "55+ Services" },
+  { name: "Mechanic", icon: Car, color: "bg-red-100 text-red-600", count: "80+ Services" },
+  { name: "Renovator", icon: Hammer, color: "bg-orange-100 text-orange-600", count: "65+ Services" },
+  { name: "Labor", icon: Users, color: "bg-purple-100 text-purple-600", count: "150+ Services" },
+  { name: "Cleaning", icon: Sparkles, color: "bg-green-100 text-green-600", count: "110+ Services" },
+  { name: "Gardening", icon: Leaf, color: "bg-emerald-100 text-emerald-600", count: "75+ Services" },
+  { name: "Painting", icon: Paintbrush, color: "bg-pink-100 text-pink-600", count: "55+ Services" },
+  { name: "Fumigation", icon: SprayCan, color: "bg-gray-100 text-gray-600", count: "30+ Services" },
+  { name: "Janitorial Services", icon: Brush, color: "bg-indigo-100 text-indigo-600", count: "40+ Services" },
 ]
+
+const categoriesList = [
+  "Electrician",
+  "Plumber",
+  "Mechanic",
+  "Renovator",
+  "Labor",
+  "Cleaning",
+  "Gardening",
+  "Painting",
+]
+
+function AnimatedCategories() {
+  const [index, setIndex] = useState(0)
+  const [displayText, setDisplayText] = useState("")
+  const [isTyping, setIsTyping] = useState(true)
+
+  useEffect(() => {
+    if (isTyping) {
+      const currentWord = categoriesList[index]
+      if (displayText.length < currentWord.length) {
+        const timeout = setTimeout(() => {
+          setDisplayText(currentWord.slice(0, displayText.length + 1))
+        }, 100) // Speed of typing
+        return () => clearTimeout(timeout)
+      } else {
+        // Word is fully typed, wait then start deleting
+        const timeout = setTimeout(() => {
+          setIsTyping(false)
+        }, 1000) // Wait 1 second after typing
+        return () => clearTimeout(timeout)
+      }
+    } else {
+      // Deleting phase
+      if (displayText.length > 0) {
+        const timeout = setTimeout(() => {
+          setDisplayText(displayText.slice(0, -1))
+        }, 50) // Speed of deleting
+        return () => clearTimeout(timeout)
+      } else {
+        // Word is fully deleted, move to next word
+        const timeout = setTimeout(() => {
+          setIndex((prev) => (prev + 1) % categoriesList.length)
+          setIsTyping(true)
+        }, 200) // Brief pause before next word
+        return () => clearTimeout(timeout)
+      }
+    }
+  }, [displayText, isTyping, index])
+
+  return (
+    <span style={{ display: "inline-block", minWidth: 120, position: "relative", top: "-0px" }}>
+      <motion.span
+        key={`${categoriesList[index]}-${isTyping}`}
+        initial={{ x: isTyping ? -20 : 0 }}
+        animate={{ x: 0 }}
+        exit={{ x: 20 }}
+        transition={{ duration: 0.3 }}
+        style={{ display: "inline-block" }}
+      >
+        {displayText}
+        {isTyping && <span className="animate-pulse">|</span>}
+      </motion.span>
+    </span>
+  )
+}
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [location, setLocation] = useState("")
   const [featuredServices, setFeaturedServices] = useState([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
 
   useEffect(() => {
     fetchFeaturedServices()
@@ -79,13 +152,29 @@ export default function HomePage() {
               <div className="space-y-4">
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                   Find Trusted
-                  <span className="block text-yellow-400">Service Providers</span>
-                  Near You
+                  <span className="block text-yellow-400">
+                    <AnimatedCategories />
+                  </span>
+                  Near You Homes and Offices
                 </h1>
                 <p className="text-xl text-blue-100 max-w-lg">
                   Connect with verified local professionals for all your home service needs. From plumbing to electrical
                   work, we've got you covered.
                 </p>
+                
+                {/* Sign Up Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                  <Link href="/auth/signup?role=client">
+                    <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-3 text-lg">
+                      Sign Up as Client
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signup?role=provider">
+                    <Button className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-semibold px-8 py-3 text-lg">
+                      Sign Up as Service Provider
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
               {/* Search Bar */}
@@ -153,7 +242,7 @@ export default function HomePage() {
             {categories.map((category) => {
               const IconComponent = category.icon
               return (
-                <Link key={category.name} href={`/services?category=${category.name}`} className="group">
+                <Link key={category.name} href="/services" className="group">
                   <Card className="hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1">
                     <CardContent className="p-6 text-center">
                       <div
@@ -168,89 +257,6 @@ export default function HomePage() {
                 </Link>
               )
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Services */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Featured Services</h2>
-            <p className="text-xl text-gray-600">Top-rated services from our most trusted professionals</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loading ? (
-              <div className="col-span-full text-center py-12">
-                <p>Loading featured services...</p>
-              </div>
-            ) : featuredServices.length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <p>No featured services available at the moment.</p>
-              </div>
-            ) : (
-              featuredServices.map((service: any) => (
-                <Link key={service._id} href={`/services/${service._id}`} className="group">
-                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
-                    <div className="relative">
-                      <Image
-                        src={service.images?.[0] || `/placeholder.svg?height=200&width=300&query=${service.category} service`}
-                        alt={service.title}
-                        width={300}
-                        height={200}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                          {service.category}
-                        </span>
-                      </div>
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                        {service.title}
-                      </h3>
-                      <p className="text-gray-600 mb-3">by {service.provider?.name}</p>
-
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="font-medium">{service.rating || 0}</span>
-                          <span className="text-gray-500 text-sm">({service.reviewCount || 0})</span>
-                        </div>
-                        <div className="flex items-center text-gray-500 text-sm">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {service.location}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-blue-600">
-                          ${service.price}
-                          <span className="text-sm text-gray-500">/{service.priceType}</span>
-                        </span>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          View Details
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            )}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link href="/services">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent"
-              >
-                View All Services
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -407,7 +413,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 HomeService. All rights reserved.</p>
+            <p>&copy; 2025 HomeService. All rights reserved.</p>
           </div>
         </div>
       </footer>

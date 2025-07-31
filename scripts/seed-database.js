@@ -5,7 +5,7 @@ const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/home-service-app"
+const MONGODB_URI = process.env.MONGODB_URI 
 
 // Sample data
 const sampleUsers = [
@@ -84,62 +84,62 @@ const sampleServices = [
     reviewCount: 89,
     tags: ["plumbing", "emergency", "leak repair", "drain cleaning"],
   },
-  // {
-  //   title: "Complete Home Renovation & Remodeling",
-  //   description:
-  //     "Transform your home with our comprehensive renovation services. Kitchen remodeling, bathroom upgrades, flooring installation, and custom carpentry work.",
-  //   category: "Renovator",
-  //   price: 80,
-  //   priceType: "hourly",
-  //   location: "Chicago, IL",
-  //   images: [],
-  //   availability: "available",
-  //   rating: 4.9,
-  //   reviewCount: 156,
-  //   tags: ["renovation", "remodeling", "kitchen", "bathroom", "flooring"],
-  // },
-  // {
-  //   title: "Auto Mechanic - Car Repair & Maintenance",
-  //   description:
-  //     "Professional automotive repair services including engine diagnostics, brake repair, oil changes, and general maintenance. ASE certified technician.",
-  //   category: "Mechanic",
-  //   price: 55,
-  //   priceType: "hourly",
-  //   location: "Houston, TX",
-  //   images: [],
-  //   availability: "available",
-  //   rating: 4.7,
-  //   reviewCount: 92,
-  //   tags: ["auto repair", "maintenance", "diagnostics", "brakes"],
-  // },
-  // {
-  //   title: "General Labor & Moving Services",
-  //   description:
-  //     "Reliable labor services for moving, furniture assembly, yard work, and general handyman tasks. Experienced team with competitive rates.",
-  //   category: "Labor",
-  //   price: 25,
-  //   priceType: "hourly",
-  //   location: "Phoenix, AZ",
-  //   images: [],
-  //   availability: "available",
-  //   rating: 4.6,
-  //   reviewCount: 73,
-  //   tags: ["labor", "moving", "assembly", "handyman"],
-  // },
-  // {
-  //   title: "Professional House Cleaning Services",
-  //   description:
-  //     "Thorough residential cleaning services including deep cleaning, regular maintenance, and move-in/move-out cleaning. Eco-friendly products available.",
-  //   category: "Cleaning",
-  //   price: 35,
-  //   priceType: "hourly",
-  //   location: "Seattle, WA",
-  //   images: [],
-  //   availability: "available",
-  //   rating: 4.8,
-  //   reviewCount: 134,
-  //   tags: ["cleaning", "deep clean", "eco-friendly", "residential"],
-  // },
+  {
+    title: "Complete Home Renovation & Remodeling",
+    description:
+      "Transform your home with our comprehensive renovation services. Kitchen remodeling, bathroom upgrades, flooring installation, and custom carpentry work.",
+    category: "Renovator",
+    price: 80,
+    priceType: "hourly",
+    location: "Chicago, IL",
+    images: [],
+    availability: "available",
+    rating: 4.9,
+    reviewCount: 156,
+    tags: ["renovation", "remodeling", "kitchen", "bathroom", "flooring"],
+  },
+  {
+    title: "Auto Mechanic - Car Repair & Maintenance",
+    description:
+      "Professional automotive repair services including engine diagnostics, brake repair, oil changes, and general maintenance. ASE certified technician.",
+    category: "Mechanic",
+    price: 55,
+    priceType: "hourly",
+    location: "Houston, TX",
+    images: [],
+    availability: "available",
+    rating: 4.7,
+    reviewCount: 92,
+    tags: ["auto repair", "maintenance", "diagnostics", "brakes"],
+  },
+  {
+    title: "General Labor & Moving Services",
+    description:
+      "Reliable labor services for moving, furniture assembly, yard work, and general handyman tasks. Experienced team with competitive rates.",
+    category: "Labor",
+    price: 25,
+    priceType: "hourly",
+    location: "Phoenix, AZ",
+    images: [],
+    availability: "available",
+    rating: 4.6,
+    reviewCount: 73,
+    tags: ["labor", "moving", "assembly", "handyman"],
+  },
+  {
+    title: "Professional House Cleaning Services",
+    description:
+      "Thorough residential cleaning services including deep cleaning, regular maintenance, and move-in/move-out cleaning. Eco-friendly products available.",
+    category: "Cleaning",
+    price: 35,
+    priceType: "hourly",
+    location: "Seattle, WA",
+    images: [],
+    availability: "available",
+    rating: 4.8,
+    reviewCount: 134,
+    tags: ["cleaning", "deep clean", "eco-friendly", "residential"],
+  },
 ]
 
 const sampleCategories = [

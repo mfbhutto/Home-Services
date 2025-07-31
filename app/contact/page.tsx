@@ -32,13 +32,25 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
-    // Simulate form submission
-    setTimeout(() => {
-      setSuccess(true)
+    setSuccess(false)
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSuccess(true)
+        setFormData({ name: "", email: "", subject: "", message: "" })
+      } else {
+        alert(data.message || "Failed to submit. Please try again.")
+      }
+    } catch (err) {
+      alert("Failed to submit. Please try again.")
+    } finally {
       setLoading(false)
-      setFormData({ name: "", email: "", subject: "", message: "" })
-    }, 1000)
+    }
   }
 
   return (

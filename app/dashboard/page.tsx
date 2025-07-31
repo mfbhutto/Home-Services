@@ -46,21 +46,79 @@ export default function DashboardPage() {
     }
 
     if (user) {
+      // Ensure axios headers are set
+      const token = localStorage.getItem("token")
+      if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+        console.log("Dashboard: Set axios Authorization header")
+      }
       fetchDashboardData()
     }
   }, [user, authLoading])
 
   const fetchDashboardData = async () => {
     try {
-      const [servicesRes, bookingsRes] = await Promise.all([
-        user?.role === "provider"
-          ? axios.get("/api/services?provider=me")
-          : Promise.resolve({ data: { services: [] } }),
-        axios.get("/api/bookings"),
-      ])
+      console.log("Fetching dashboard data for user:", user?.name, "Role:", user?.role)
+      
+      // Get token for authenticated request
+      const token = localStorage.getItem("token")
+      console.log("Token exists:", !!token)
+      
+      // Set axios default headers for this session
+      if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+        console.log("Set axios default Authorization header")
+      }
+      
+      // Fetch services separately to debug
+      let servicesRes
+      if (user?.role === "provider") {
+        try {
+          console.log("Making services API call with provider=me")
+          console.log("User ID:", user._id)
+          console.log("Authorization header:", `Bearer ${token?.substring(0, 20)}...`)
+          
+          servicesRes = await axios.get("/api/services?provider=me")
+          console.log("Services API Response:", servicesRes.data)
+          console.log("Services API Status:", servicesRes.status)
+          console.log("Number of services returned:", servicesRes.data.services?.length || 0)
+          
+          // Check if services belong to current user
+          if (servicesRes.data.services) {
+            servicesRes.data.services.forEach((service, index) => {
+              console.log(`Service ${index + 1}:`, {
+                title: service.title,
+                provider: service.provider,
+                currentUserId: user._id,
+                isMyService: service.provider === user._id
+              })
+            })
+          }
+        } catch (servicesError) {
+          console.error("Services API Error:", servicesError.response?.data)
+          console.error("Services API Status:", servicesError.response?.status)
+          servicesRes = { data: { services: [] } }
+        }
+      } else {
+        servicesRes = { data: { services: [] } }
+      }
+
+      // Fetch bookings separately to handle errors
+      let bookingsRes
+      try {
+        bookingsRes = await axios.get("/api/bookings")
+        console.log("Bookings API Response:", bookingsRes.data)
+      } catch (bookingsError) {
+        console.error("Bookings API Error:", bookingsError.response?.data)
+        console.error("Bookings API Status:", bookingsError.response?.status)
+        bookingsRes = { data: { bookings: [] } }
+      }
 
       if (user?.role === "provider") {
-        setServices(servicesRes.data.services || [])
+        const services = servicesRes.data.services || []
+        console.log("Setting services:", services.length, "services")
+        console.log("Services data:", services)
+        setServices(services)
       }
       setBookings(bookingsRes.data.bookings || [])
 
@@ -70,6 +128,8 @@ export default function DashboardPage() {
       const pendingBookings = bookingsRes.data.bookings?.filter((b: any) => b.status === "pending").length || 0
       const completedBookings = bookingsRes.data.bookings?.filter((b: any) => b.status === "completed").length || 0
 
+      console.log("Stats:", { totalServices, totalBookings, pendingBookings, completedBookings })
+
       setStats({
         totalServices,
         totalBookings,
@@ -78,6 +138,7 @@ export default function DashboardPage() {
       })
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
+      console.error("Error details:", error.response?.data)
     } finally {
       setLoading(false)
     }
@@ -316,15 +377,27 @@ export default function DashboardPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>My Services</CardTitle>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={fetchDashboardData}
+                        disabled={loading}
+                      >
+                        {loading ? "Refreshing..." : "Refresh"}
+                      </Button>
                     <Link href="/dashboard/services/new">
                       <Button size="sm">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Service
                       </Button>
                     </Link>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {console.log("Rendering services section. Services count:", services.length)}
+                  {console.log("Services data:", services)}
                   {services.length > 0 ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {services.map((service: any) => (
