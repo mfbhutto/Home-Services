@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import axios from "axios"
@@ -37,6 +37,11 @@ export default function AddServicePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { toast } = useToast()
+
+  // Token state set on client mount
+  const [token, setToken] = useState<string | null>(null)
+  const [hasRedirected, setHasRedirected] = useState(false)
+
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -51,12 +56,27 @@ export default function AddServicePage() {
   const [newTag, setNewTag] = useState("")
   const [uploadingImages, setUploadingImages] = useState(false)
 
-  // Debug logging
-  console.log("AddServicePage - User:", user)
-  console.log("AddServicePage - AuthLoading:", authLoading)
-  console.log("AddServicePage - Token:", localStorage.getItem("token") ? "Exists" : "Not found")
+  // Get token on client side safely
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setToken(localStorage.getItem("token"))
+    }
+  }, [])
 
-  if (authLoading) {
+  // Redirects after auth status is known
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user && !hasRedirected) {
+        setHasRedirected(true)
+        router.push("/auth/login")
+      } else if (user?.role !== "provider" && !hasRedirected) {
+        setHasRedirected(true)
+        router.push("/dashboard")
+      }
+    }
+  }, [user, authLoading, router, hasRedirected])
+
+  if (authLoading || !token) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -65,16 +85,6 @@ export default function AddServicePage() {
         </div>
       </div>
     )
-  }
-
-  if (!user) {
-    router.push("/auth/login")
-    return null
-  }
-
-  if (user.role !== "provider") {
-    router.push("/dashboard")
-    return null
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -93,26 +103,17 @@ export default function AddServicePage() {
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("handleImageUpload called")
-    console.log("Files:", e.target.files)
-    
     const files = e.target.files
-    if (!files || files.length === 0) {
-      console.log("No files selected")
-      return
-    }
+    if (!files || files.length === 0) return
 
-    console.log("Number of files:", files.length)
     setUploadingImages(true)
 
     try {
       const uploadedUrls: string[] = []
-      
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        console.log("Processing file:", file.name, "Size:", file.size, "Type:", file.type)
-        
-        // Check file size (max 5MB)
+
         if (file.size > 5 * 1024 * 1024) {
           toast({
             title: "Error",
@@ -122,7 +123,6 @@ export default function AddServicePage() {
           continue
         }
 
-        // Check file type
         if (!file.type.startsWith('image/')) {
           toast({
             title: "Error",
@@ -132,41 +132,24 @@ export default function AddServicePage() {
           continue
         }
 
-        // For now, we'll create a data URL for the image
-        // In production, you'd upload to Cloudinary, AWS S3, or similar
         const reader = new FileReader()
-        
         const imageUrl = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => {
-            console.log("File read successfully:", file.name)
-            resolve(reader.result as string)
-          }
-          reader.onerror = () => {
-            console.error("File read error:", file.name)
-            reject(new Error('Failed to read file'))
-          }
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = () => reject(new Error('Failed to read file'))
           reader.readAsDataURL(file)
         })
 
         uploadedUrls.push(imageUrl)
-        console.log("Image URL created for:", file.name)
       }
 
       if (uploadedUrls.length > 0) {
-        setFormData(prev => ({ 
-          ...prev, 
-          images: [...prev.images, ...uploadedUrls]
-        }))
-
-        console.log("Total images now:", formData.images.length + uploadedUrls.length)
-
+        setFormData(prev => ({ ...prev, images: [...prev.images, ...uploadedUrls] }))
         toast({
           title: "Success!",
           description: `${uploadedUrls.length} image(s) uploaded successfully.`,
         })
       }
     } catch (error) {
-      console.error("Image upload error:", error)
       toast({
         title: "Error",
         description: "Failed to upload images. Please try again.",
@@ -178,20 +161,12 @@ export default function AddServicePage() {
   }
 
   const handleChooseFilesClick = () => {
-    console.log("Choose Files button clicked")
     const fileInput = document.getElementById("image-upload") as HTMLInputElement
-    if (fileInput) {
-      fileInput.click()
-    } else {
-      console.error("File input not found")
-    }
+    if (fileInput) fileInput.click()
   }
 
   const handleRemoveImage = (imageUrl: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      images: prev.images.filter(img => img !== imageUrl)
-    }))
+    setFormData(prev => ({ ...prev, images: prev.images.filter(img => img !== imageUrl) }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -199,7 +174,6 @@ export default function AddServicePage() {
     setLoading(true)
 
     try {
-      // Check if user is authenticated
       if (!user) {
         toast({
           title: "Error",
@@ -209,8 +183,6 @@ export default function AddServicePage() {
         return
       }
 
-      // Check if token exists
-      const token = localStorage.getItem("token")
       if (!token) {
         toast({
           title: "Error",
@@ -219,9 +191,6 @@ export default function AddServicePage() {
         })
         return
       }
-
-      console.log("Submitting service with token:", token.substring(0, 20) + "...")
-      console.log("User info:", { name: user.name, role: user.role, id: user._id })
 
       const response = await axios.post("/api/services", {
         ...formData,
@@ -233,8 +202,6 @@ export default function AddServicePage() {
         }
       })
 
-      console.log("Service created successfully:", response.data)
-
       toast({
         title: "Success!",
         description: "Service created successfully.",
@@ -242,8 +209,6 @@ export default function AddServicePage() {
 
       router.push("/dashboard")
     } catch (error: any) {
-      console.error("Service creation error:", error)
-      console.error("Error response:", error.response?.data)
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to create service.",
@@ -259,7 +224,6 @@ export default function AddServicePage() {
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -267,18 +231,10 @@ export default function AddServicePage() {
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Add New Service</h1>
           <p className="text-gray-600 mt-2">Create a new service listing to attract clients</p>
-          
-          {/* Debug Info */}
-          {/* <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-            <p className="text-sm text-gray-600">
-              <strong>Debug Info:</strong> User: {user?.name} | Role: {user?.role} | Token: {localStorage.getItem("token") ? "✅ Found" : "❌ Missing"}
-            </p>
-          </div> */}
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Form */}
             <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
               <Card>
@@ -468,7 +424,6 @@ export default function AddServicePage() {
                               alt={`Service image ${index + 1}`}
                               className="w-full h-24 object-cover rounded-lg border"
                               onError={(e) => {
-                                console.error("Image failed to load:", image)
                                 e.currentTarget.src = "/placeholder-image.jpg"
                               }}
                             />
@@ -547,4 +502,4 @@ export default function AddServicePage() {
       </div>
     </div>
   )
-} 
+}
