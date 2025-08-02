@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb"
 import Booking from "@/lib/models/Booking"
 import Service from "@/lib/models/Service"
 import { verifyToken, getTokenFromRequest } from "@/lib/jwt"
+import { createBookingNotifications } from "@/lib/notifications"
 
 export async function POST(request) {
   try {
@@ -39,6 +40,14 @@ export async function POST(request) {
       .populate("client", "name email phone")
       .populate("provider", "name email phone")
       .populate("service", "title category price")
+
+    // Create notification for service provider
+    try {
+      await createBookingNotifications(populatedBooking, "created")
+    } catch (error) {
+      console.error("Error creating notification:", error)
+      // Don't fail the booking creation if notification fails
+    }
 
     return NextResponse.json(
       {

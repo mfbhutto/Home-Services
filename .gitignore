@@ -17,4 +17,12 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
-.env*node_modules/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+
+# local env files
+.env*.local

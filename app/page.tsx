@@ -429,13 +429,15 @@ function LottieLoader() {
       .then(setAnimationData)
   }, [])
   if (!animationData) {
-    return <div style={{ width: 600, height: 500 }} />
+    return <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] max-w-full" />
   }
   return (
-    <Lottie
-      animationData={animationData}
-      loop={true}
-      style={{ width: 600, height: 500 }}
-    />
+    <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] max-w-full flex items-center justify-center">
+      <Lottie
+        animationData={animationData}
+        loop={true}
+        className="w-full h-full object-contain"
+      />
+    </div>
   )
 }

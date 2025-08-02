@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import BookingResponseModal from "@/components/BookingResponseModal"
+import CompleteBookingModal from "@/components/CompleteBookingModal"
+import ReviewModal from "@/components/ReviewModal"
 import {
   Briefcase,
   Calendar,
@@ -20,10 +23,14 @@ import {
   Plus,
   Eye,
   Edit,
+  Trash2,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
+  MessageSquare,
+  Bell,
+  MessageCircle,
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -38,6 +45,13 @@ export default function DashboardPage() {
     pendingBookings: 0,
     completedBookings: 0,
   })
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [isResponseModalOpen, setIsResponseModalOpen] = useState(false)
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState(null)
+  const [notifications, setNotifications] = useState([])
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -53,6 +67,7 @@ export default function DashboardPage() {
         console.log("Dashboard: Set axios Authorization header")
       }
       fetchDashboardData()
+      fetchNotifications()
     }
   }, [user, authLoading])
 
@@ -144,11 +159,36 @@ export default function DashboardPage() {
     }
   }
 
+  const fetchNotifications = async () => {
+    try {
+      setNotificationsLoading(true)
+      const response = await axios.get("/api/notifications")
+      setNotifications(response.data.notifications || [])
+    } catch (error) {
+      console.error("Error fetching notifications:", error)
+    } finally {
+      setNotificationsLoading(false)
+    }
+  }
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      await axios.put("/api/notifications", { notificationIds: [notificationId] })
+      setNotifications(prev => 
+        prev.map(n => 
+          n._id === notificationId ? { ...n, isRead: true } : n
+        )
+      )
+    } catch (error) {
+      console.error("Error marking notification as read:", error)
+    }
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
         return <Clock className="w-4 h-4 text-yellow-500" />
-      case "accepted":
+      case "confirmed":
         return <CheckCircle className="w-4 h-4 text-green-500" />
       case "completed":
         return <CheckCircle className="w-4 h-4 text-blue-500" />
@@ -165,7 +205,7 @@ export default function DashboardPage() {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800"
-      case "accepted":
+      case "confirmed":
         return "bg-green-100 text-green-800"
       case "completed":
         return "bg-blue-100 text-blue-800"
@@ -176,6 +216,68 @@ export default function DashboardPage() {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm("Are you sure you want to delete this service? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem("token")
+      await axios.delete(`/api/services/${serviceId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      // Remove the service from the local state
+      setServices(prevServices => prevServices.filter(service => service._id !== serviceId))
+      
+      // Update stats
+      setStats(prevStats => ({
+        ...prevStats,
+        totalServices: prevStats.totalServices - 1
+      }))
+
+      alert("Service deleted successfully!")
+    } catch (error: any) {
+      console.error("Service deletion error:", error)
+      alert(error.response?.data?.message || "Failed to delete service.")
+    }
+  }
+
+  const handleRespondToBooking = (booking: any) => {
+    setSelectedBooking(booking)
+    setIsResponseModalOpen(true)
+  }
+
+  const handleBookingResponseSuccess = () => {
+    // Refresh the dashboard data
+    fetchDashboardData()
+    fetchNotifications()
+  }
+
+  const handleCompleteBooking = (booking: any) => {
+    setSelectedBooking(booking)
+    setIsCompleteModalOpen(true)
+  }
+
+  const handleBookingCompletionSuccess = () => {
+    // Refresh the dashboard data
+    fetchDashboardData()
+    fetchNotifications()
+  }
+
+  const handleLeaveReview = (booking: any) => {
+    setSelectedBookingForReview(booking)
+    setIsReviewModalOpen(true)
+  }
+
+  const handleReviewSubmitted = () => {
+    fetchDashboardData()
+    setIsReviewModalOpen(false)
+    setSelectedBookingForReview(null)
   }
 
   if (authLoading || loading) {
@@ -288,6 +390,7 @@ export default function DashboardPage() {
           <TabsList>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             {user?.role === "provider" && <TabsTrigger value="services">My Services</TabsTrigger>}
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
@@ -340,11 +443,108 @@ export default function DashboardPage() {
                                 </p>
                               </div>
                             )}
+
+                                                         {/* Show response information for confirmed/rejected bookings */}
+                             {(booking.status === "confirmed" || booking.status === "rejected") && (
+                               <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                                 <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                   <div>
+                                     <p><strong>Final Amount:</strong> ${booking.finalAmount}</p>
+                                     <p><strong>Payment Method:</strong> {booking.paymentMethod === "cash" ? "Cash on Delivery" : "Card Payment"}</p>
+                                   </div>
+                                   {booking.serviceProviderNote && (
+                                     <div>
+                                       <p><strong>Provider Note:</strong> {booking.serviceProviderNote}</p>
+                                     </div>
+                                   )}
+                                 </div>
+                               </div>
+                             )}
+
+                             {/* Show completion information for completed bookings */}
+                             {booking.status === "completed" && (
+                               <div className="mt-3 p-3 bg-green-50 rounded-md">
+                                 <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                   <div>
+                                     <p><strong>Final Amount:</strong> ${booking.finalAmount}</p>
+                                     <p><strong>Payment Method:</strong> {booking.paymentMethod === "cash" ? "Cash on Delivery" : "Card Payment"}</p>
+                                     <p><strong>Completed On:</strong> {new Date(booking.updatedAt).toLocaleDateString()}</p>
+                                   </div>
+                                   {booking.completionNote && (
+                                     <div>
+                                       <p><strong>Completion Note:</strong> {booking.completionNote}</p>
+                                     </div>
+                                   )}
+                                 </div>
+                               </div>
+                             )}
                           </div>
 
                           <div className="text-right">
                             <p className="text-lg font-bold text-blue-600">${booking.service?.price}</p>
                             <p className="text-sm text-gray-500">{booking.service?.priceType}</p>
+                            
+                                                         {/* Respond button for pending bookings (providers only) */}
+                             {user?.role === "provider" && 
+                              booking.status === "pending" && 
+                              booking.provider?._id === user._id && (
+                               <div className="mt-3">
+                                 <Button
+                                   size="sm"
+                                   onClick={() => handleRespondToBooking(booking)}
+                                   className="bg-blue-600 hover:bg-blue-700"
+                                 >
+                                   <MessageSquare className="w-4 h-4 mr-2" />
+                                   Respond
+                                 </Button>
+                               </div>
+                             )}
+
+                             {/* Complete button for confirmed bookings (providers only) */}
+                             {user?.role === "provider" && 
+                              booking.status === "confirmed" && 
+                              booking.provider?._id === user._id && (
+                               <div className="mt-3">
+                                 <Button
+                                   size="sm"
+                                   onClick={() => handleCompleteBooking(booking)}
+                                   className="bg-green-600 hover:bg-green-700"
+                                 >
+                                   <CheckCircle className="w-4 h-4 mr-2" />
+                                   Complete
+                                 </Button>
+                               </div>
+                             )}
+
+                             {/* Leave Review button for completed bookings (clients only) */}
+                             {user?.role === "client" && 
+                              booking.status === "completed" && 
+                              booking.client?._id === user._id && 
+                              !booking.reviewed && (
+                               <div className="mt-3">
+                                 <Button
+                                   size="sm"
+                                   onClick={() => handleLeaveReview(booking)}
+                                   className="bg-purple-600 hover:bg-purple-700"
+                                 >
+                                   <MessageCircle className="w-4 h-4 mr-2" />
+                                   Leave Review
+                                 </Button>
+                               </div>
+                             )}
+
+                             {/* Review submitted indicator for completed bookings */}
+                             {user?.role === "client" && 
+                              booking.status === "completed" && 
+                              booking.client?._id === user._id && 
+                              booking.reviewed && (
+                               <div className="mt-3">
+                                 <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                   <CheckCircle className="w-3 h-3 mr-1" />
+                                   Review Submitted
+                                 </Badge>
+                               </div>
+                             )}
                           </div>
                         </div>
                       </div>
@@ -420,8 +620,9 @@ export default function DashboardPage() {
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center space-x-1">
                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                <span className="text-sm font-medium">{service.rating || 0}</span>
-                                <span className="text-sm text-gray-500">({service.reviewCount || 0})</span>
+                                <span className="text-sm font-medium">
+                                  {service.rating || 0} from {service.reviewCount || 0} review{service.reviewCount !== 1 ? "s" : ""}
+                                </span>
                               </div>
                               <div className="flex items-center text-gray-500 text-sm">
                                 <MapPin className="w-4 h-4 mr-1" />
@@ -445,6 +646,14 @@ export default function DashboardPage() {
                                     <Edit className="w-4 h-4" />
                                   </Button>
                                 </Link>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleDeleteService(service._id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
@@ -470,6 +679,99 @@ export default function DashboardPage() {
               </Card>
             </TabsContent>
           )}
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notificationsLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="border rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <Skeleton className="w-8 h-8 rounded-full" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : notifications.length > 0 ? (
+                  <div className="space-y-4">
+                    {notifications.map((notification: any) => (
+                      <div 
+                        key={notification._id} 
+                        className={`border rounded-lg p-4 transition-colors ${
+                          !notification.isRead ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Bell className="w-4 h-4 text-blue-600" />
+                            </div>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold text-gray-900">
+                                {notification.title}
+                              </h3>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs text-gray-500">
+                                  {new Date(notification.createdAt).toLocaleDateString()}
+                                </span>
+                                {!notification.isRead && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 mt-1">
+                              {notification.message}
+                            </p>
+                            
+                            {notification.booking && (
+                              <div className="mt-2 text-xs text-gray-500">
+                                <p>Service: {notification.booking.service?.title}</p>
+                                <p>Status: {notification.booking.status}</p>
+                              </div>
+                            )}
+                            
+                            {!notification.isRead && (
+                              <div className="mt-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => markNotificationAsRead(notification._id)}
+                                  className="text-xs"
+                                >
+                                  Mark as read
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
+                    <p className="text-gray-600">
+                      You'll receive notifications here when there are updates to your bookings.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Profile Tab */}
           <TabsContent value="profile">
@@ -538,6 +840,31 @@ export default function DashboardPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  )
-}
+
+             {/* Booking Response Modal */}
+       <BookingResponseModal
+         isOpen={isResponseModalOpen}
+         onClose={() => setIsResponseModalOpen(false)}
+         booking={selectedBooking}
+         onSuccess={handleBookingResponseSuccess}
+       />
+
+       {/* Complete Booking Modal */}
+       <CompleteBookingModal
+         isOpen={isCompleteModalOpen}
+         onClose={() => setIsCompleteModalOpen(false)}
+         booking={selectedBooking}
+         onSuccess={handleBookingCompletionSuccess}
+       />
+
+       {/* Review Modal */}
+       <ReviewModal
+         isOpen={isReviewModalOpen}
+         onClose={() => setIsReviewModalOpen(false)}
+         bookingId={selectedBookingForReview?._id}
+         serviceTitle={selectedBookingForReview?.service?.title}
+         onReviewSubmitted={handleReviewSubmitted}
+       />
+     </div>
+   )
+ }

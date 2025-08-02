@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Menu, X, Home, User, LogOut, Settings, Plus } from "lucide-react"
+import NotificationDropdown from "./NotificationDropdown"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -46,6 +47,8 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center space-x-4">
+                <NotificationDropdown />
+                
                 {user.role === "provider" && (
                   <Link href="/dashboard/services/new">
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
@@ -79,7 +82,7 @@ export default function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard/profile" className="flex items-center">
+                      <Link href="/dashboard/settings" className="flex items-center">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </Link>
@@ -143,6 +146,13 @@ export default function Navbar() {
                     onClick={() => setIsOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard/settings"
+                    className="block px-3 py-2 text-gray-700 hover:text-blue-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Settings
                   </Link>
                   {user.role === "provider" && (
                     <Link

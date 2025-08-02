@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Star, MapPin, Phone, Calendar, Shield } from "lucide-react"
+import ReviewsList from "@/components/ReviewsList"
 
 export default function ServiceDetailPage() {
   const params = useParams()
@@ -211,8 +212,9 @@ export default function ServiceDetailPage() {
                     <h3 className="font-semibold text-lg">{service.provider?.name}</h3>
                     <div className="flex items-center space-x-1 text-sm text-gray-600">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span>{service.provider?.rating || 0}</span>
-                      <span>({service.provider?.reviewCount || 0} reviews)</span>
+                      <span>
+                        {service.provider?.rating || 0} from {service.provider?.reviewCount || 0} review{service.provider?.reviewCount !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   </div>
                   {service.provider?.isVerified && (
@@ -335,6 +337,14 @@ export default function ServiceDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Reviews Section */}
+            <ReviewsList 
+              serviceId={service._id}
+              serviceProviderId={service.provider._id}
+              title="Customer Reviews"
+              showAverage={true}
+            />
           </div>
         </div>
       </div>

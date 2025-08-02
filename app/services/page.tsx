@@ -260,8 +260,9 @@ export default function ServicesPage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="font-medium text-sm">{service.rating || 0}</span>
-                        <span className="text-gray-500 text-sm">({service.reviewCount || 0})</span>
+                        <span className="font-medium text-sm">
+                          {service.rating || 0} from {service.reviewCount || 0} review{service.reviewCount !== 1 ? "s" : ""}
+                        </span>
                       </div>
                       <div className="flex items-center text-gray-500 text-sm">
                         <MapPin className="w-4 h-4 mr-1" />

@@ -57,28 +57,6 @@ export default function EditServicePage() {
   console.log("EditServicePage - Service ID:", params.id)
   console.log("EditServicePage - User:", user)
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user || user.role !== "provider") {
-    router.push("/auth/login")
-    return null
-  }
-
-  useEffect(() => {
-    if (params.id) {
-      fetchService()
-    }
-  }, [params.id])
-
   const fetchService = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -92,9 +70,17 @@ export default function EditServicePage() {
       console.log("Fetched service:", service)
 
       // Check if the service belongs to the current user
+      console.log("Edit page - User from context:", user)
+      console.log("Edit page - Service provider:", service.provider)
+      console.log("Edit page - User ID from context:", user._id)
+      console.log("Edit page - Service provider type:", typeof service.provider)
+      
       const isOwner =
         (typeof service.provider === "object" && service.provider._id === user._id) ||
         (typeof service.provider === "string" && service.provider === user._id)
+      
+      console.log("Edit page - Is owner:", isOwner)
+      
       if (!isOwner) {
         toast({
           title: "Error",
@@ -126,6 +112,28 @@ export default function EditServicePage() {
     } finally {
       setFetching(false)
     }
+  }
+
+  useEffect(() => {
+    if (params.id && user && user.role === "provider") {
+      fetchService()
+    }
+  }, [params.id, user])
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || user.role !== "provider") {
+    router.push("/auth/login")
+    return null
   }
 
   const handleInputChange = (field: string, value: string) => {
