@@ -160,7 +160,7 @@ export default function ServiceDetailPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-blue-600">
-                      ${service.price}
+                      PKR {service.price}
                       <span className="text-lg text-gray-500">/{service.priceType}</span>
                     </div>
                     <Badge

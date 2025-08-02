@@ -481,7 +481,7 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="text-right">
-                            <p className="text-lg font-bold text-blue-600">${booking.service?.price}</p>
+                            <p className="text-lg font-bold text-blue-600">PKR {booking.service?.price}</p>
                             <p className="text-sm text-gray-500">{booking.service?.priceType}</p>
                             
                                                          {/* Respond button for pending bookings (providers only) */}
@@ -632,7 +632,7 @@ export default function DashboardPage() {
 
                             <div className="flex items-center justify-between">
                               <div>
-                                <span className="text-xl font-bold text-blue-600">${service.price}</span>
+                                <span className="text-xl font-bold text-blue-600">PKR {service.price}</span>
                                 <span className="text-sm text-gray-500">/{service.priceType}</span>
                               </div>
                               <div className="flex space-x-2">

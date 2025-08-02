@@ -21,8 +21,8 @@ const categories = [
   { name: "Plumber", label: "Plumber", icon: Wrench },
   { name: "Mechanic", label: "Mechanic", icon: Car },
   { name: "Renovator", label: "Renovator", icon: Hammer },
-  { name: "Labor", label: "Labor", icon: Users },
-  { name: "Cleaning", label: "Cleaning", icon: Sparkles },
+  { name: "HomeMaid", label: "HomeMaid", icon: Users },
+  { name: "Janitorial Services", label: "Janitorial Services", icon: Sparkles },
   { name: "Gardening", label: "Gardening", icon: Leaf },
   { name: "Painting", label: "Painting", icon: Paintbrush },
   { name: "Fumigation", label: "Fumigation", icon: SprayCan },
@@ -271,7 +271,7 @@ export default function ServicesPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-xl font-bold text-blue-600">${service.price}</span>
+                        <span className="text-xl font-bold text-blue-600">PKR {service.price}</span>
                         <span className="text-sm text-gray-500">/{service.priceType}</span>
                       </div>
                       <Badge

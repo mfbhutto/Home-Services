@@ -21,8 +21,8 @@ const categories = [
   { value: "Plumber", label: "Plumber" },
   { value: "Mechanic", label: "Mechanic" },
   { value: "Renovator", label: "Renovator" },
-  { value: "Labor", label: "Labor" },
-  { value: "Cleaning", label: "Cleaning" },
+  { value: "HomeMaid", label: "HomeMaid" },
+  { value: "Janitorial Services", label: "Janitorial Services" },
   { value: "Gardening", label: "Gardening" },
   { value: "Painting", label: "Painting" },
 ]
@@ -467,7 +467,7 @@ export default function AddServicePage() {
                   {formData.price && (
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold text-blue-600">
-                        ${formData.price}
+                        PKR {formData.price}
                       </span>
                       <span className="text-sm text-gray-500">/{formData.priceType}</span>
                     </div>

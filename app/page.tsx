@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import Navbar from "@/components/Navbar"
+import Logo from "@/components/Logo"
 import {
   Search,
   Star,
@@ -35,8 +36,8 @@ const categories = [
   { name: "Plumber", icon: Wrench, color: "bg-blue-100 text-blue-600", count: "95+ Services" },
   { name: "Mechanic", icon: Car, color: "bg-red-100 text-red-600", count: "80+ Services" },
   { name: "Renovator", icon: Hammer, color: "bg-orange-100 text-orange-600", count: "65+ Services" },
-  { name: "Labor", icon: Users, color: "bg-purple-100 text-purple-600", count: "150+ Services" },
-  { name: "Cleaning", icon: Sparkles, color: "bg-green-100 text-green-600", count: "110+ Services" },
+  { name: "HomeMaid", icon: Users, color: "bg-purple-100 text-purple-600", count: "150+ Services" },
+  { name: "Janitorial Services", icon: Sparkles, color: "bg-green-100 text-green-600", count: "110+ Services" },
   { name: "Gardening", icon: Leaf, color: "bg-emerald-100 text-emerald-600", count: "75+ Services" },
   { name: "Painting", icon: Paintbrush, color: "bg-pink-100 text-pink-600", count: "55+ Services" },
   { name: "Fumigation", icon: SprayCan, color: "bg-gray-100 text-gray-600", count: "30+ Services" },
@@ -48,8 +49,8 @@ const categoriesList = [
   "Plumber",
   "Mechanic",
   "Renovator",
-  "Labor",
-  "Cleaning",
+  "HomeMaid",
+  "Janitorial Services",
   "Gardening",
   "Painting",
 ]
@@ -150,6 +151,8 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
+                {/* Logo removed */}
+                
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                   Find Trusted
                   <span className="block text-yellow-400">
@@ -308,7 +311,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of satisfied customers who found their perfect service provider through HomeService
+            Join thousands of satisfied customers who found their perfect service provider through PakFix
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/services">
@@ -334,12 +337,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Home className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">HomeService</span>
-              </div>
+              <Logo showTagline={true} className="text-white" />
               <p className="text-gray-400">
                 Connecting you with trusted local service providers for all your home needs.
               </p>
@@ -366,6 +364,16 @@ export default function HomePage() {
                 <li>
                   <Link href="/services?category=Renovator" className="hover:text-white">
                     Renovator
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/services?category=HomeMaid" className="hover:text-white">
+                    HomeMaid
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/services?category=Janitorial Services" className="hover:text-white">
+                    Janitorial Services
                   </Link>
                 </li>
               </ul>
@@ -413,7 +421,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 HomeService. All rights reserved.</p>
+            <p>&copy; 2025 PakFix. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -113,10 +113,10 @@ const sampleServices = [
     tags: ["auto repair", "maintenance", "diagnostics", "brakes"],
   },
   {
-    title: "General Labor & Moving Services",
+    title: "HomeMaid & Moving Services",
     description:
-      "Reliable labor services for moving, furniture assembly, yard work, and general handyman tasks. Experienced team with competitive rates.",
-    category: "Labor",
+      "Reliable home services for moving, furniture assembly, yard work, and general handyman tasks. Experienced team with competitive rates.",
+    category: "HomeMaid",
     price: 25,
     priceType: "hourly",
     location: "Phoenix, AZ",
@@ -124,13 +124,13 @@ const sampleServices = [
     availability: "available",
     rating: 4.6,
     reviewCount: 73,
-    tags: ["labor", "moving", "assembly", "handyman"],
+    tags: ["homemaid", "moving", "assembly", "handyman"],
   },
   {
-    title: "Professional House Cleaning Services",
+    title: "Professional Janitorial Services",
     description:
       "Thorough residential cleaning services including deep cleaning, regular maintenance, and move-in/move-out cleaning. Eco-friendly products available.",
-    category: "Cleaning",
+    category: "Janitorial Services",
     price: 35,
     priceType: "hourly",
     location: "Seattle, WA",
@@ -138,7 +138,7 @@ const sampleServices = [
     availability: "available",
     rating: 4.8,
     reviewCount: 134,
-    tags: ["cleaning", "deep clean", "eco-friendly", "residential"],
+    tags: ["janitorial", "deep clean", "eco-friendly", "residential"],
   },
 ]
 
@@ -168,14 +168,14 @@ const sampleCategories = [
     color: "#F97316",
   },
   {
-    name: "Labor",
-    description: "General labor and handyman services",
+    name: "HomeMaid",
+    description: "General home services and handyman tasks",
     icon: "users",
     color: "#8B5CF6",
   },
   {
-    name: "Cleaning",
-    description: "Professional cleaning services",
+    name: "Janitorial Services",
+    description: "Professional janitorial and cleaning services",
     icon: "sparkles",
     color: "#10B981",
   },

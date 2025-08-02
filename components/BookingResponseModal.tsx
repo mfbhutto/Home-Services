@@ -129,7 +129,7 @@ export default function BookingResponseModal({
               <p><strong>Service:</strong> {booking.service?.title}</p>
               <p><strong>Client:</strong> {booking.client?.name}</p>
               <p><strong>Date:</strong> {new Date(booking.preferredDate).toLocaleDateString()}</p>
-              <p><strong>Original Price:</strong> ${booking.service?.price}/{booking.service?.priceType}</p>
+              <p><strong>Original Price:</strong> PKR {booking.service?.price}/{booking.service?.priceType}</p>
             </div>
           </div>
 
